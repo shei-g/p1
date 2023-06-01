@@ -1,0 +1,141 @@
+#Linear Regression
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set_style("whitegrid")
+sns.set_context("poster")
+
+%matplotlib inline
+
+#Train-Test Split Module
+from sklearn.model_selection import train_test_split
+
+#Linear Regression Algorithm from sklearn
+from sklearn.linear_model import LinearRegression
+
+#Metrics to measure model performance
+from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
+
+#Load the boston dataset from sklearn
+
+from sklearn.datasets import load_boston
+
+boston = load_boston()
+
+#Description of the dataset
+print(boston.DESCR)
+
+#Convert dataset into a Pandas Dataframe
+df = pd.DataFrame(boston.data, columns=boston.feature_names)
+
+#Add the target variable: Median Price ("PRICE")
+df["PRICE"] = boston.target
+
+#Check the dataset
+df.head()
+
+#Describe the dataset
+df.describe()
+
+#Get the correlation of the attributes
+corr = df.corr()
+corr
+
+#Visualize Correlation
+
+# Generate a mask for the upper triangle
+mask = np.zeros_like(corr, dtype=np.bool)
+mask[np.triu_indices_from(mask)] = True
+
+# Set up the matplotlib figure
+f, ax = plt.subplots(figsize=(11, 9))
+
+# Generate a custom diverging colormap
+cmap = sns.diverging_palette(220, 10, as_cmap=True)
+
+# Draw the heatmap with the correct aspect ratio
+sns.heatmap(corr, mask=mask, cmap=cmap, vmax=.9, square=True, linewidths=.5, ax=ax)
+
+#Building the Model
+
+#Consider only 1 attribute to be used for regression, for this example we'll test with RM (number of rooms)
+df_x = df["RM"]
+
+#consider volume as our target
+df_y = df["PRICE"]
+len(df_x), len(df_y)
+
+#reshapping the dataset
+df_x_reshape = df_x.values.reshape(-1, 1)
+df_y_reshape = df_y.values.reshape(-1, 1)
+len(df_x_reshape), len(df_y_reshape)
+
+#Split the dataset into Train and Test Sets
+x_train, x_test, y_train, y_test = train_test_split(df_x_reshape, df_y_reshape, test_size=0.30, random_state = 5)
+
+print (x_train.shape, y_train.shape, x_test.shape, y_test.shape)
+
+#Visualize the relationship
+f, ax = plt.subplots(figsize=(11, 9))
+plt.scatter(y_train, x_train)
+plt.xlabel("RM")
+plt.ylabel("PRICE")
+plt.title("RM vs PRICE")
+
+
+#Instantiate the Linear Regression Algorithm
+linreg = LinearRegression()
+
+#Train the Model
+linreg.fit(x_train,y_train)
+
+#Extract Coefficient and Intercept
+print(("Coefficient: %.2f") %linreg.coef_)
+print(("Intercept: %.2f") %linreg.intercept_)
+print(("y = %.2fx + %.2f") %(linreg.coef_, linreg.intercept_))
+
+#Validation
+
+#Predict on the Test Set
+y_pred = linreg.predict(x_test)
+
+#Measure the performance of the model
+r2 = r2_score(y_test, y_pred)
+mae = mean_absolute_error(y_test, y_pred)
+mse = mean_squared_error(y_test, y_pred)
+
+print(("r2: %.2f") %r2)
+print(("mae: %.2f") %mae)
+print(("mse: %.2f") %mse)
+
+#Get a table of the results
+df_results = pd.DataFrame(y_test, columns=['Actual'])
+df_results['Predicted'] = y_pred
+df_results.head()
+
+#Visualize the results
+f, ax = plt.subplots(figsize=(11, 9))
+plt.scatter(y_test, y_pred)
+plt.xlabel("Actual Prices")
+plt.ylabel("Predicted prices")
+plt.title("Actual Prices vs Predicted Prices")
+
+#Draw the regressing line based on the predicted output
+
+fig = plt.figure(figsize=(11,9))
+
+ax = fig.add_subplot(111)
+fig.subplots_adjust(top=0.85)
+ax.set_title('Boston Linear Regression')
+
+ax.set_xlabel('RM')
+ax.set_ylabel('PRICE')
+
+plt.scatter(x_test, y_test, color='red')
+plt.plot(x_test, y_pred, color='blue',linewidth=3)
+
+plt.show()
+
+#end
